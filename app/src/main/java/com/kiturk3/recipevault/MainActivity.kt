@@ -44,6 +44,7 @@ class MainActivity : ComponentActivity() {
 fun RecipeCard(modifier: Modifier = Modifier) {
     Card(modifier = modifier) {
         Column(modifier = Modifier.padding(16.dp)) {
+            Column() { }
             Text(
                 text = "Spaghetti Carbonara",
                 style = MaterialTheme.typography.headlineSmall,
