@@ -5,9 +5,10 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -31,26 +32,25 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.navigation.compose.rememberNavController
 import com.kiturk3.recipevault.model.RecipeItem
+import com.kiturk3.recipevault.route.RecipeVaultNavHost
 import com.kiturk3.recipevault.ui.theme.RecipeVaultTheme
 
 class MainActivity : ComponentActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
             RecipeVaultTheme {
+                val navController = rememberNavController()
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Column(
-                        modifier = Modifier
-                            .padding(innerPadding)
-                            .padding(16.dp)
-                    ) {
-                        RecipeScreen()
+                    Box(modifier = Modifier.padding(innerPadding)) {
+                        RecipeVaultNavHost(navController = navController)
                     }
                 }
             }
@@ -69,14 +69,18 @@ fun FavButton(
     }
 }
 
-@Preview(showBackground = true)
 @Composable
-fun RecipeScreen(modifier: Modifier = Modifier) {
+fun RecipeScreen(
+    onRecipeClick: (Int) -> Unit,
+    modifier: Modifier = Modifier
+) {
     var searchQuery by remember { mutableStateOf("") }
     var recipes by remember { mutableStateOf(listOf(
         RecipeItem(1, "Spaghetti Carbonara", "30 min · Italian", false),
         RecipeItem(2, "Chicken Tikka Masala", "45 min · Indian", false),
         RecipeItem(3, "Pad Thai", "25 min · Thai", false)))}
+
+
 
     fun toggleFavorite(id: Int) {
         recipes = recipes.map { item ->
@@ -90,32 +94,72 @@ fun RecipeScreen(modifier: Modifier = Modifier) {
 
     Column(modifier = modifier) {
         SearchUI(searchInput = searchQuery, onQueryChange = { searchQuery = it })
-        RecipeList(filteredRecipes, onToggleFav = { toggleFavorite(it) })
+        RecipeList(
+            recipes = filteredRecipes,
+            onToggleFav = { toggleFavorite(it) },
+            onRecipeClick = onRecipeClick   // ← passed through, not constructed here
+        )
     }
 
 }
 
+@Preview(showBackground = true)
+@Composable
+fun RecipeScreenPreview() {
+    RecipeVaultTheme {
+        RecipeScreen(onRecipeClick = {})
+    }
+}
 
 @Composable
 fun RecipeList(
     recipes: List<RecipeItem>,
-    onToggleFav: (Int) -> Unit
+    onToggleFav: (Int) -> Unit,
+    onRecipeClick: (Int) -> Unit,
+    modifier: Modifier = Modifier
 ) {
-    LazyColumn(
-        modifier = Modifier.fillMaxWidth(),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        items(
-            items = recipes,
-            key = { it.id }
-        ) { recipe ->
+    LazyColumn(modifier = modifier.fillMaxSize()) {
+        items(recipes, key = { it.id }) { recipe ->
             RecipeCard(
                 title = recipe.title,
                 subtitle = recipe.durationAndCuisine,
                 isFav = recipe.isFav,
                 onFavToggle = { onToggleFav(recipe.id) },
+                onClick = { onRecipeClick(recipe.id) },   // ← no NavController here at all
                 modifier = Modifier.fillMaxWidth()
+            )
+        }
+    }
+}
+
+
+@Composable
+fun RecipeCard(
+    title: String,
+    subtitle: String,
+    isFav: Boolean,
+    onFavToggle: () -> Unit,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(modifier = modifier.clickable(onClick = onClick)){
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold
+                )
+                FavButton(isFav = isFav, onToggle = onFavToggle)
+            }
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.padding(top = 4.dp)
             )
         }
     }
@@ -132,40 +176,4 @@ fun SearchUI(
         label = {Text("Search")},
         modifier = Modifier.fillMaxWidth()
     )
-}
-
-@Composable
-fun RecipeCard(
-    title : String,
-    subtitle: String,
-    isFav : Boolean,
-    onFavToggle: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Card(modifier = modifier) {
-        Column(
-            modifier = Modifier
-                .padding(16.dp)
-                .fillMaxWidth()
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontFamily = FontFamily.Cursive,
-                    fontWeight = FontWeight.Bold
-                )
-                FavButton(isFav = isFav, onToggle = onFavToggle)
-            }
-            Text(
-                text = subtitle,
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.padding(top = 4.dp)
-            )
-        }
-    }
 }
