@@ -1,6 +1,7 @@
 package com.kiturk3.recipevault
 
 
+import android.content.res.Configuration
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -25,6 +26,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -65,7 +67,10 @@ fun FavButton(
     modifier: Modifier = Modifier
 ) {
     IconButton(onClick = onToggle, modifier = modifier) {
-        Icon(if (isFav) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder, null)
+        Icon(if (isFav) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
+            null,
+            tint = if (isFav) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
+            )
     }
 }
 
@@ -103,6 +108,7 @@ fun RecipeScreen(
 
 }
 
+@Preview(uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Preview(showBackground = true)
 @Composable
 fun RecipeScreenPreview() {
@@ -152,14 +158,16 @@ fun RecipeCard(
                 Text(
                     text = title,
                     style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.tertiary
                 )
                 FavButton(isFav = isFav, onToggle = onFavToggle)
             }
             Text(
                 text = subtitle,
                 style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.padding(top = 4.dp)
+                modifier = Modifier.padding(top = 4.dp),
+                color = MaterialTheme.colorScheme.tertiary
             )
         }
     }
@@ -173,7 +181,11 @@ fun SearchUI(
     OutlinedTextField(
         value = searchInput,
         onValueChange = onQueryChange,
-        label = {Text("Search")},
-        modifier = Modifier.fillMaxWidth()
+        label = { Text("Search", color = MaterialTheme.colorScheme.tertiary) },
+        modifier = Modifier.fillMaxWidth(),
+        colors = TextFieldDefaults.colors(
+            focusedTextColor = MaterialTheme.colorScheme.tertiary,
+            unfocusedTextColor = MaterialTheme.colorScheme.tertiary
+        )
     )
 }
