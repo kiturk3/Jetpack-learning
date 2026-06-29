@@ -10,16 +10,21 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material3.Card
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -28,12 +33,14 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -41,6 +48,8 @@ import androidx.navigation.compose.rememberNavController
 import com.kiturk3.recipevault.model.RecipeItem
 import com.kiturk3.recipevault.route.RecipeVaultNavHost
 import com.kiturk3.recipevault.ui.theme.RecipeVaultTheme
+import kotlinx.coroutines.delay
+import kotlin.time.Duration.Companion.milliseconds
 
 class MainActivity : ComponentActivity() {
 
@@ -67,10 +76,11 @@ fun FavButton(
     modifier: Modifier = Modifier
 ) {
     IconButton(onClick = onToggle, modifier = modifier) {
-        Icon(if (isFav) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
+        Icon(
+            if (isFav) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
             null,
             tint = if (isFav) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
-            )
+        )
     }
 }
 
@@ -80,12 +90,16 @@ fun RecipeScreen(
     modifier: Modifier = Modifier
 ) {
     var searchQuery by remember { mutableStateOf("") }
-    var recipes by remember { mutableStateOf(listOf(
-        RecipeItem(1, "Spaghetti Carbonara", "30 min · Italian", false),
-        RecipeItem(2, "Chicken Tikka Masala", "45 min · Indian", false),
-        RecipeItem(3, "Pad Thai", "25 min · Thai", false)))}
-
-
+    var isLoading by remember { mutableStateOf(true) }
+    var recipes by remember {
+        mutableStateOf(
+            listOf(
+                RecipeItem(1, "Spaghetti Carbonara", "30 min · Italian", false),
+                RecipeItem(2, "Chicken Tikka Masala", "45 min · Indian", false),
+                RecipeItem(3, "Pad Thai", "25 min · Thai", false)
+            )
+        )
+    }
 
     fun toggleFavorite(id: Int) {
         recipes = recipes.map { item ->
@@ -93,19 +107,57 @@ fun RecipeScreen(
         }
     }
 
-    val filteredRecipes = recipes.filter {
-        it.title.contains(searchQuery, ignoreCase = true) || it.durationAndCuisine.contains(searchQuery, ignoreCase = true)
+    LaunchedEffect(Unit) {
+        delay(1500.milliseconds)   // simulate network call
+        isLoading = false
     }
 
-    Column(modifier = modifier) {
-        SearchUI(searchInput = searchQuery, onQueryChange = { searchQuery = it })
-        RecipeList(
-            recipes = filteredRecipes,
-            onToggleFav = { toggleFavorite(it) },
-            onRecipeClick = onRecipeClick   // ← passed through, not constructed here
+    val filteredRecipes = recipes.filter {
+        it.title.contains(searchQuery, ignoreCase = true) || it.durationAndCuisine.contains(
+            searchQuery,
+            ignoreCase = true
         )
     }
 
+    Box(
+        modifier = modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        if (isLoading) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(48.dp),
+                color = MaterialTheme.colorScheme.primary,
+                strokeWidth = 4.dp,
+                trackColor = MaterialTheme.colorScheme.surfaceVariant, // the "background ring"
+                strokeCap = StrokeCap.Round
+            )
+        } else {
+            Column(modifier = Modifier.fillMaxSize()) {
+                SearchUI(
+                    searchInput = searchQuery,
+                    onQueryChange = { searchQuery = it },
+                    modifier = Modifier.padding(16.dp)
+                )
+                when {
+                    recipes.isEmpty() -> NoRecipeUI(
+                        title = "No recipes yet",
+                        subtitle = "Pull to refresh or check back later"
+                    )
+
+                    filteredRecipes.isEmpty() -> NoRecipeUI(
+                        title = "No matches found",
+                        subtitle = "Try a different search term"
+                    )
+
+                    else -> RecipeList(
+                        recipes = filteredRecipes,
+                        onToggleFav = { toggleFavorite(it) },
+                        onRecipeClick = onRecipeClick
+                    )
+                }
+            }
+        }
+    }
 }
 
 @Preview(uiMode = Configuration.UI_MODE_NIGHT_YES)
@@ -124,7 +176,11 @@ fun RecipeList(
     onRecipeClick: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    LazyColumn(modifier = modifier.fillMaxSize()) {
+    LazyColumn(
+        modifier = modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        contentPadding = PaddingValues(16.dp)
+    ) {
         items(recipes, key = { it.id }) { recipe ->
             RecipeCard(
                 title = recipe.title,
@@ -148,7 +204,7 @@ fun RecipeCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Card(modifier = modifier.clickable(onClick = onClick)){
+    Card(modifier = modifier.clickable(onClick = onClick)) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -174,18 +230,72 @@ fun RecipeCard(
 }
 
 @Composable
+fun NoRecipeUI(title: String, subtitle: String, modifier: Modifier = Modifier) {
+    Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Text(
+                title,
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.tertiary
+            )
+            Text(
+                subtitle,
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.padding(top = 4.dp),
+                color = MaterialTheme.colorScheme.tertiary
+            )
+        }
+    }
+}
+
+@Composable
 fun SearchUI(
     searchInput: String,
     onQueryChange: (String) -> Unit,
+    modifier: Modifier = Modifier
 ) {
     OutlinedTextField(
         value = searchInput,
         onValueChange = onQueryChange,
         label = { Text("Search", color = MaterialTheme.colorScheme.tertiary) },
-        modifier = Modifier.fillMaxWidth(),
+        leadingIcon = {
+            Icon(
+                Icons.Default.Search,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.tertiary
+            )
+        },
+        trailingIcon = {
+            if (searchInput.isNotEmpty()) {
+                IconButton(onClick = { onQueryChange("") }) {
+                    Icon(
+                        Icons.Default.Clear,
+                        contentDescription = "Clear search",
+                        tint = MaterialTheme.colorScheme.tertiary
+                    )
+                }
+            }
+        },
+        modifier = modifier.fillMaxWidth(),
         colors = TextFieldDefaults.colors(
             focusedTextColor = MaterialTheme.colorScheme.tertiary,
-            unfocusedTextColor = MaterialTheme.colorScheme.tertiary
+            unfocusedTextColor = MaterialTheme.colorScheme.tertiary,
+            focusedContainerColor = MaterialTheme.colorScheme.surface,
+            unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+            focusedIndicatorColor = MaterialTheme.colorScheme.tertiary,
+            unfocusedIndicatorColor = MaterialTheme.colorScheme.outline,
+            focusedLabelColor = MaterialTheme.colorScheme.tertiary,
+            unfocusedLabelColor = MaterialTheme.colorScheme.tertiary,
+            focusedLeadingIconColor = MaterialTheme.colorScheme.tertiary,
+            unfocusedLeadingIconColor = MaterialTheme.colorScheme.tertiary,
+            focusedTrailingIconColor = MaterialTheme.colorScheme.tertiary,
+            unfocusedTrailingIconColor = MaterialTheme.colorScheme.tertiary,
+            cursorColor = MaterialTheme.colorScheme.tertiary
         )
     )
 }
