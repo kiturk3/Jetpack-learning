@@ -49,6 +49,7 @@ import com.kiturk3.recipevault.model.RecipeItem
 import com.kiturk3.recipevault.route.RecipeVaultNavHost
 import com.kiturk3.recipevault.ui.theme.RecipeVaultTheme
 import kotlinx.coroutines.delay
+import java.io.IOException
 import kotlin.time.Duration.Companion.milliseconds
 
 class MainActivity : ComponentActivity() {
@@ -91,6 +92,7 @@ fun RecipeScreen(
 ) {
     var searchQuery by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(true) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
     var recipes by remember {
         mutableStateOf(
             listOf(
@@ -101,15 +103,22 @@ fun RecipeScreen(
         )
     }
 
+    LaunchedEffect(Unit) {
+        try {
+            delay(1500.milliseconds)
+            errorMessage = null
+        } catch (e: IOException) {
+            errorMessage = "Failed to load: ${e.message}"
+        }
+        finally {
+            isLoading = false
+        }
+    }
+
     fun toggleFavorite(id: Int) {
         recipes = recipes.map { item ->
             if (item.id == id) item.copy(isFav = !item.isFav) else item
         }
-    }
-
-    LaunchedEffect(Unit) {
-        delay(1500.milliseconds)   // simulate network call
-        isLoading = false
     }
 
     val filteredRecipes = recipes.filter {
@@ -123,7 +132,12 @@ fun RecipeScreen(
         modifier = modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
-        if (isLoading) {
+        if (errorMessage != null) {
+            NoRecipeUI(
+                title = "Something went wrong",
+                subtitle = errorMessage ?: "Unknown error"
+            )
+        } else if (isLoading) {
             CircularProgressIndicator(
                 modifier = Modifier.size(48.dp),
                 color = MaterialTheme.colorScheme.primary,
@@ -137,6 +151,12 @@ fun RecipeScreen(
                     searchInput = searchQuery,
                     onQueryChange = { searchQuery = it },
                     modifier = Modifier.padding(16.dp)
+                )
+                Text(
+                    text = if (searchQuery.isEmpty()) "Total Recipes: ${recipes.size}" else "Matches found: ${filteredRecipes.size}",
+                    style = MaterialTheme.typography.labelLarge,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                    color = MaterialTheme.colorScheme.secondary
                 )
                 when {
                     recipes.isEmpty() -> NoRecipeUI(
@@ -252,6 +272,7 @@ fun NoRecipeUI(title: String, subtitle: String, modifier: Modifier = Modifier) {
         }
     }
 }
+
 
 @Composable
 fun SearchUI(
