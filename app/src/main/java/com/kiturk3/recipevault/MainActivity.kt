@@ -50,6 +50,7 @@ import androidx.navigation.compose.rememberNavController
 import com.kiturk3.recipevault.model.RecipeItem
 import com.kiturk3.recipevault.route.RecipeVaultNavHost
 import com.kiturk3.recipevault.ui.theme.RecipeVaultTheme
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.filter
@@ -91,6 +92,7 @@ fun FavButton(
     }
 }
 
+@OptIn(FlowPreview::class)
 @Composable
 fun RecipeScreen(
     onRecipeClick: (Int) -> Unit,
