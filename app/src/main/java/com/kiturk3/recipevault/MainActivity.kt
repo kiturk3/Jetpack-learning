@@ -3,6 +3,7 @@ package com.kiturk3.recipevault
 
 import android.content.res.Configuration
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -38,6 +39,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.StrokeCap
@@ -49,6 +51,10 @@ import com.kiturk3.recipevault.model.RecipeItem
 import com.kiturk3.recipevault.route.RecipeVaultNavHost
 import com.kiturk3.recipevault.ui.theme.RecipeVaultTheme
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
 import java.io.IOException
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -121,12 +127,26 @@ fun RecipeScreen(
         }
     }
 
+    var debouncedQuery by remember { mutableStateOf("") }
+
     val filteredRecipes = recipes.filter {
-        it.title.contains(searchQuery, ignoreCase = true) || it.durationAndCuisine.contains(
-            searchQuery,
+        it.title.contains(debouncedQuery, ignoreCase = true) || it.durationAndCuisine.contains(
+            debouncedQuery,
             ignoreCase = true
         )
     }
+
+    LaunchedEffect(Unit ) {
+        snapshotFlow { searchQuery }
+            .debounce(300.milliseconds)
+//            .filter { it.length > 3 }                                                     // ignore queries shorter than 3 chars
+            .collect { query ->
+                Log.d("Search Query", query)
+                debouncedQuery = query
+            }
+    }
+
+
 
     Box(
         modifier = modifier.fillMaxSize(),
