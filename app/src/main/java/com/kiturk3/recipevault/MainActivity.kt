@@ -3,7 +3,6 @@ package com.kiturk3.recipevault
 
 import android.content.res.Configuration
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -34,30 +33,22 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.rememberNavController
 import com.kiturk3.recipevault.model.RecipeItem
 import com.kiturk3.recipevault.route.RecipeVaultNavHost
 import com.kiturk3.recipevault.ui.theme.RecipeVaultTheme
+import com.kiturk3.recipevault.uiStates.RecipeUiState
+import com.kiturk3.recipevault.viewModel.RecipeViewModel
 import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.map
-import java.io.IOException
-import kotlin.time.Duration.Companion.milliseconds
 
 class MainActivity : ComponentActivity() {
 
@@ -92,60 +83,19 @@ fun FavButton(
     }
 }
 
-@OptIn(FlowPreview::class)
 @Composable
 fun RecipeScreen(
     onRecipeClick: (Int) -> Unit,
+    viewModel: RecipeViewModel = viewModel(),
     modifier: Modifier = Modifier
 ) {
-    var searchQuery by remember { mutableStateOf("") }
-    var isLoading by remember { mutableStateOf(true) }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
-    var recipes by remember {
-        mutableStateOf(
-            listOf(
-                RecipeItem(1, "Spaghetti Carbonara", "30 min · Italian", false),
-                RecipeItem(2, "Chicken Tikka Masala", "45 min · Indian", false),
-                RecipeItem(3, "Pad Thai", "25 min · Thai", false)
-            )
-        )
-    }
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val searchQuery by  viewModel.searchQuery.collectAsStateWithLifecycle()
 
-    LaunchedEffect(Unit) {
-        try {
-            delay(1500.milliseconds)
-            errorMessage = null
-        } catch (e: IOException) {
-            errorMessage = "Failed to load: ${e.message}"
-        }
-        finally {
-            isLoading = false
-        }
-    }
+
 
     fun toggleFavorite(id: Int) {
-        recipes = recipes.map { item ->
-            if (item.id == id) item.copy(isFav = !item.isFav) else item
-        }
-    }
-
-    var debouncedQuery by remember { mutableStateOf("") }
-
-    val filteredRecipes = recipes.filter {
-        it.title.contains(debouncedQuery, ignoreCase = true) || it.durationAndCuisine.contains(
-            debouncedQuery,
-            ignoreCase = true
-        )
-    }
-
-    LaunchedEffect(Unit ) {
-        snapshotFlow { searchQuery }
-            .debounce(300.milliseconds)
-//            .filter { it.length > 3 }                                                     // ignore queries shorter than 3 chars
-            .collect { query ->
-                Log.d("Search Query", query)
-                debouncedQuery = query
-            }
+        viewModel.toggleFavorite(id)
     }
 
 
@@ -154,48 +104,53 @@ fun RecipeScreen(
         modifier = modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
-        if (errorMessage != null) {
-            NoRecipeUI(
-                title = "Something went wrong",
-                subtitle = errorMessage ?: "Unknown error"
-            )
-        } else if (isLoading) {
-            CircularProgressIndicator(
-                modifier = Modifier.size(48.dp),
-                color = MaterialTheme.colorScheme.primary,
-                strokeWidth = 4.dp,
-                trackColor = MaterialTheme.colorScheme.surfaceVariant, // the "background ring"
-                strokeCap = StrokeCap.Round
-            )
-        } else {
-            Column(modifier = Modifier.fillMaxSize()) {
-                SearchUI(
-                    searchInput = searchQuery,
-                    onQueryChange = { searchQuery = it },
-                    modifier = Modifier.padding(16.dp)
+        when (uiState) {
+            is RecipeUiState.Loading -> {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(48.dp),
+                    color = MaterialTheme.colorScheme.primary,
+                    strokeWidth = 4.dp,
+                    trackColor = MaterialTheme.colorScheme.surfaceVariant,
+                    strokeCap = StrokeCap.Round
                 )
-                Text(
-                    text = if (searchQuery.isEmpty()) "Total Recipes: ${recipes.size}" else "Matches found: ${filteredRecipes.size}",
-                    style = MaterialTheme.typography.labelLarge,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                    color = MaterialTheme.colorScheme.secondary
+            }
+            is RecipeUiState.Error -> {
+                NoRecipeUI(
+                    title = "Something went wrong",
+                    subtitle = (uiState as RecipeUiState.Error).message
                 )
-                when {
-                    recipes.isEmpty() -> NoRecipeUI(
-                        title = "No recipes yet",
-                        subtitle = "Pull to refresh or check back later"
+            }
+            is RecipeUiState.Success -> {
+                val successState = uiState as RecipeUiState.Success
+                Column(modifier = Modifier.fillMaxSize()) {
+                    SearchUI(
+                        searchInput = searchQuery,
+                        onQueryChange = { viewModel.onSearchQueryChange(it) },
+                        modifier = Modifier.padding(16.dp)
                     )
-
-                    filteredRecipes.isEmpty() -> NoRecipeUI(
-                        title = "No matches found",
-                        subtitle = "Try a different search term"
+                    Text(
+                        text = if (successState.searchQuery.isEmpty()) "Total Recipes: ${successState.recipes.size}" else "Matches found: ${successState.filteredRecipes.size}",
+                        style = MaterialTheme.typography.labelLarge,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                        color = MaterialTheme.colorScheme.secondary
                     )
+                    when {
+                        successState.recipes.isEmpty() -> NoRecipeUI(
+                            title = "No recipes yet",
+                            subtitle = "Pull to refresh or check back later"
+                        )
 
-                    else -> RecipeList(
-                        recipes = filteredRecipes,
+                        successState.filteredRecipes.isEmpty() -> NoRecipeUI(
+                            title = "No matches found",
+                            subtitle = "Try a different search term"
+                        )
+
+                        else -> RecipeList(
+                            recipes = successState.filteredRecipes,
                         onToggleFav = { toggleFavorite(it) },
                         onRecipeClick = onRecipeClick
                     )
+                    }
                 }
             }
         }
