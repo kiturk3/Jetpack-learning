@@ -5,5 +5,5 @@ data class Recipe(
     val title: String,
     val duration: Int,
     val cuisine: String,
-    val isFavorite: Boolean
+    val isFav: Boolean = false
 )
