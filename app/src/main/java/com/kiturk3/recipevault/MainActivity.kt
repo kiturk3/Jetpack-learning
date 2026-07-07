@@ -40,16 +40,17 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.rememberNavController
-import com.kiturk3.recipevault.model.RecipeItem
+import com.kiturk3.recipevault.domain.model.Recipe
 import com.kiturk3.recipevault.route.RecipeVaultNavHost
 import com.kiturk3.recipevault.ui.theme.RecipeVaultTheme
 import com.kiturk3.recipevault.uiStates.RecipeUiState
 import com.kiturk3.recipevault.viewModel.RecipeViewModel
-import kotlinx.coroutines.FlowPreview
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -86,19 +87,11 @@ fun FavButton(
 @Composable
 fun RecipeScreen(
     onRecipeClick: (Int) -> Unit,
-    viewModel: RecipeViewModel = viewModel(),
+    viewModel: RecipeViewModel = hiltViewModel(),
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val searchQuery by  viewModel.searchQuery.collectAsStateWithLifecycle()
-
-
-
-    fun toggleFavorite(id: Int) {
-        viewModel.toggleFavorite(id)
-    }
-
-
 
     Box(
         modifier = modifier.fillMaxSize(),
@@ -147,9 +140,9 @@ fun RecipeScreen(
 
                         else -> RecipeList(
                             recipes = successState.filteredRecipes,
-                        onToggleFav = { toggleFavorite(it) },
-                        onRecipeClick = onRecipeClick
-                    )
+                            onToggleFav = { viewModel.toggleFavorite(it) },
+                            onRecipeClick = onRecipeClick
+                        )
                     }
                 }
             }
@@ -168,7 +161,7 @@ fun RecipeScreenPreview() {
 
 @Composable
 fun RecipeList(
-    recipes: List<RecipeItem>,
+    recipes: List<Recipe>,
     onToggleFav: (Int) -> Unit,
     onRecipeClick: (Int) -> Unit,
     modifier: Modifier = Modifier
@@ -181,7 +174,7 @@ fun RecipeList(
         items(recipes, key = { it.id }) { recipe ->
             RecipeCard(
                 title = recipe.title,
-                subtitle = recipe.durationAndCuisine,
+                subtitle = "${recipe.duration} min · ${recipe.cuisine}",
                 isFav = recipe.isFav,
                 onFavToggle = { onToggleFav(recipe.id) },
                 onClick = { onRecipeClick(recipe.id) },   // ← no NavController here at all
