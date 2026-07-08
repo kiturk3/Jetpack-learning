@@ -29,7 +29,7 @@ class RecipeDetailViewModel @Inject constructor(
         loadRecipe(route.recipeId)
     }
 
-    fun loadRecipe(id : Int){
+    private fun loadRecipe(id : Int){
             viewModelScope.launch {
                 getRecipeByIdUseCase(id)
                     .catch { e -> _uiState.value = RecipeDetailUiState.Error(e.message ?: "Failed to load Recipe...") }

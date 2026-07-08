@@ -67,6 +67,7 @@ dependencies {
     implementation(libs.hilt.android)
     ksp(libs.hilt.android.compiler)
     implementation(libs.androidx.hilt.navigation.compose)
+    implementation(libs.androidx.hilt.lifecycle.viewmodel.compose)
     debugImplementation(libs.androidx.ui.tooling)
 
     // Retrofit
@@ -77,5 +78,11 @@ dependencies {
     // OkHttp logging (invaluable for debugging network calls)
     implementation("com.squareup.okhttp3:okhttp")
     implementation("com.squareup.okhttp3:logging-interceptor")
+
+    //Room Database
+    val roomVersion = "2.7.1"
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx.v271)  // Flow support
+    ksp(libs.androidx.room.compiler)
 
 }

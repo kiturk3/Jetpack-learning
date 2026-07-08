@@ -69,15 +69,9 @@ fun RecipeDetailScreen(
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
                     text = state.recipe.instructions ?: "No instruction available",
-                    style = MaterialTheme.typography.titleMedium,
+                    style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.tertiary
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = "Full instructions coming in Phase 4 polish",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface
                 )
                 Spacer(modifier = Modifier.height(24.dp))
             }
