@@ -10,5 +10,6 @@ fun MealDto.toRecipe(): Recipe{
         duration = 0,
         cuisine = area ?: category ?: "Unknown",
         isFav = false,
+        instructions = instructions
     )
 }

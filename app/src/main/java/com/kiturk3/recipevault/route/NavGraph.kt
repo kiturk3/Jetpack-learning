@@ -23,10 +23,7 @@ fun RecipeVaultNavHost(navController: NavHostController) {
         }
         composable<RecipeDetailRoute> { backStackEntry ->
             val route: RecipeDetailRoute = backStackEntry.toRoute()
-            RecipeDetailScreen(
-                recipeId = route.recipeId,
-                onBack = { navController.popBackStack() }
-            )
+            RecipeDetailScreen()
         }
     }
 }
