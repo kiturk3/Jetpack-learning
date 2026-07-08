@@ -4,15 +4,16 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kiturk3.recipevault.domain.model.Recipe
 import com.kiturk3.recipevault.domain.usecase.GetRecipesUseCase
+import com.kiturk3.recipevault.domain.usecase.SearchRecipesUseCase
 import com.kiturk3.recipevault.domain.usecase.ToggleFavoriteUseCase
-
-import com.kiturk3.recipevault.model.RecipeItem
 import com.kiturk3.recipevault.uiStates.RecipeUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.launch
 import java.io.IOException
 import javax.inject.Inject
@@ -21,7 +22,8 @@ import kotlin.time.Duration.Companion.milliseconds
 @HiltViewModel
 class RecipeViewModel @Inject constructor(
     private val getRecipesUseCase: GetRecipesUseCase,
-    private val getToggleFavoriteUseCase: ToggleFavoriteUseCase
+    private val getToggleFavoriteUseCase: ToggleFavoriteUseCase,
+    private val searchRecipesUseCase: SearchRecipesUseCase
 ) : ViewModel(){
     private val _uiState = MutableStateFlow<RecipeUiState>(RecipeUiState.Loading)
     val uiState: StateFlow<RecipeUiState> = _uiState.asStateFlow()
@@ -50,11 +52,17 @@ class RecipeViewModel @Inject constructor(
         viewModelScope.launch {
             _searchQuery
                 .debounce(300.milliseconds)
-                .collect { query ->
-                    val current = _uiState.value
-                    if (current is RecipeUiState.Success) {
-                        updateSuccess(current.recipes, query)
+                .flatMapLatest { query->
+                    if (query.isNullOrBlank()){
+                        getRecipesUseCase()
                     }
+                    else{
+                        searchRecipesUseCase(query)
+                    }
+                }
+                .catch { e -> _uiState.value = RecipeUiState.Error("Search failed: ${e.message}" ) }
+                .collect {
+                    recipes -> updateSuccess(recipes = recipes, _searchQuery.value)
                 }
         }
     }
@@ -77,10 +85,7 @@ class RecipeViewModel @Inject constructor(
     private fun updateSuccess(recipes: List<Recipe>, query: String) {
         _uiState.value = RecipeUiState.Success(
             recipes = recipes,
-            filteredRecipes = recipes.filter {
-                it.title.contains(query, ignoreCase = true) ||
-                        it.cuisine.contains(query, ignoreCase = true)
-            },
+            filteredRecipes = recipes,
             searchQuery = query
         )
     }
