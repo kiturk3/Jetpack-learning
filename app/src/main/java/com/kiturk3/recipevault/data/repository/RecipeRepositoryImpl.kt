@@ -13,11 +13,6 @@ import kotlin.time.Duration.Companion.milliseconds
 class RecipeRepositoryImpl @Inject constructor(
     private val apiService: MealApiService
 ) : RecipeRepository {
-//    private var recipes = listOf(
-//        Recipe(1, "Spaghetti Carbonara", 30, "Italian", false),
-//        Recipe(2, "Chicken Tikka Masala", 45, "Indian", false),
-//        Recipe(3, "Pad Thai", 25, "Thai", false)
-//    )
 
     override fun getRecipes(): Flow<List<Recipe>> = flow {
         val response = apiService.searchMeals(query = "")
@@ -25,17 +20,19 @@ class RecipeRepositoryImpl @Inject constructor(
         emit(recipes)
     }
 
-    override fun getRecipeById(id: Int): Flow<Recipe?> {
-        TODO("Not yet implemented")
+    override fun getRecipeById(id: Int): Flow<Recipe?> = flow {
+        val response = apiService.getMealById(id.toString())
+        val recipe = response.meals?.firstOrNull()?.toRecipe()
+        emit(recipe)
     }
 
-    override fun searchRecipes(query: String): Flow<List<Recipe>> {
-        TODO("Not yet implemented")
+    override fun searchRecipes(query: String): Flow<List<Recipe>> = flow {
+        val response = apiService.searchMeals(query = query)
+        val recipes = response.meals?.map { it.toRecipe() } ?: emptyList()
+        emit(recipes)
     }
 
     override suspend fun toggleFavorite(recipeId: Int, isFavorite: Boolean) {
-//        recipes = recipes.map { recipe ->
-//            if (recipe.id == recipeId) recipe.copy(isFav = isFavorite) else recipe
-//        }
+        // TODO: Implement local database update for favorites
     }
 }

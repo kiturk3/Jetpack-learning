@@ -1,9 +1,7 @@
 package com.kiturk3.recipevault.data.remote.dto
 
 import com.google.gson.annotations.SerializedName
-import kotlinx.serialization.Serializable
 
-@Serializable
 data class MealDto(
     @SerializedName("idMeal") val id: String,
     @SerializedName("strMeal") val name: String,
