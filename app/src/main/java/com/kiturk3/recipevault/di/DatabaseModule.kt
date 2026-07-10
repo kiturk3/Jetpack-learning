@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Room
 import com.kiturk3.recipevault.data.local.RecipeDatabase
 import com.kiturk3.recipevault.data.local.dao.FavoriteDao
+import com.kiturk3.recipevault.data.local.dao.RecipeDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -14,7 +15,7 @@ import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
-class DatabaseModule {
+object DatabaseModule {
 
     @Provides
     @Singleton
@@ -23,12 +24,20 @@ class DatabaseModule {
     ): RecipeDatabase {
         return Room.databaseBuilder(context = context,
             RecipeDatabase::class.java,
-            "recipe_vault_db").build()
+            "recipe_vault_db")
+            .fallbackToDestructiveMigration(dropAllTables = true)
+            .build()
     }
 
     @Provides
     @Singleton
     fun provideFavoriteDao(database: RecipeDatabase): FavoriteDao{
         return database.favoriteDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideRecipeDao(database: RecipeDatabase): RecipeDao{
+        return database.recipeDao()
     }
 }
