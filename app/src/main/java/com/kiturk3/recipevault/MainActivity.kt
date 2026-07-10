@@ -121,6 +121,14 @@ fun RecipeScreen(
                         onQueryChange = { viewModel.onSearchQueryChange(it) },
                         modifier = Modifier.padding(16.dp)
                     )
+                    if (successState.isStale) {
+                        Text(
+                            text = "Showing cached results — check your connection",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.padding(horizontal = 16.dp)
+                        )
+                    }
                     Text(
                         text = if (successState.searchQuery.isEmpty()) "Total Recipes: ${successState.recipes.size}" else "Matches found: ${successState.filteredRecipes.size}",
                         style = MaterialTheme.typography.labelLarge,
@@ -137,6 +145,8 @@ fun RecipeScreen(
                             title = "No matches found",
                             subtitle = "Try a different search term"
                         )
+
+
 
                         else -> RecipeList(
                             recipes = successState.filteredRecipes,

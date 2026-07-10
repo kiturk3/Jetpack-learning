@@ -4,6 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
+import com.kiturk3.recipevault.domain.Resource
 import com.kiturk3.recipevault.domain.usecase.GetRecipeByIdUseCase
 import com.kiturk3.recipevault.presentation.detail.RecipeDetailUiState
 import com.kiturk3.recipevault.route.RecipeDetailRoute
@@ -11,7 +12,6 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -29,20 +29,26 @@ class RecipeDetailViewModel @Inject constructor(
         loadRecipe(route.recipeId)
     }
 
-    private fun loadRecipe(id : Int){
-            viewModelScope.launch {
-                getRecipeByIdUseCase(id)
-                    .catch { e -> _uiState.value = RecipeDetailUiState.Error(e.message ?: "Failed to load Recipe...") }
-                    .collect {
-                        recipe ->
-                        _uiState.value = if(recipe != null){
-                            RecipeDetailUiState.Success(recipe)
-                        }
-                        else{
-                            RecipeDetailUiState.Error("Recipe not found")
+    private fun loadRecipe(id: Int) {
+        viewModelScope.launch {
+            getRecipeByIdUseCase(id)
+                .collect { resource ->
+                    when (resource) {
+                        is Resource.Loading -> _uiState.value = RecipeDetailUiState.Loading
+                        is Resource.Success -> _uiState.value = RecipeDetailUiState.Success(resource.data)
+                        is Resource.Error -> {
+                            if (resource.data != null) {
+                                // Have cached recipe — show it
+                                _uiState.value = RecipeDetailUiState.Success(resource.data)
+                            } else {
+                                _uiState.value = RecipeDetailUiState.Error(
+                                    resource.message
+                                )
+                            }
                         }
                     }
-            }
+                }
+        }
     }
 
 }

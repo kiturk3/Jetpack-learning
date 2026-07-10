@@ -6,6 +6,7 @@ import com.kiturk3.recipevault.data.local.entity.FavoriteEntity
 import com.kiturk3.recipevault.data.remote.MealApiService
 import com.kiturk3.recipevault.data.remote.mapper.toEntity
 import com.kiturk3.recipevault.data.remote.mapper.toRecipe
+import com.kiturk3.recipevault.domain.Resource
 import com.kiturk3.recipevault.domain.model.Recipe
 import com.kiturk3.recipevault.domain.repository.RecipeRepository
 import kotlinx.coroutines.flow.Flow
@@ -20,12 +21,13 @@ class RecipeRepositoryImpl @Inject constructor(
     private val recipeDao: RecipeDao
 ) : RecipeRepository {
 
-    override fun getRecipes(): Flow<List<Recipe>> = flow {
+    override fun getRecipes(): Flow<Resource<List<Recipe>>> = flow {
+        emit(Resource.Loading)
         val favoriteIds = favoriteDao.getFavoriteIds().first()
         //Try to load from database first
         val cached = recipeDao.getAllRecipes().first()
         if (cached.isNotEmpty()){
-            emit(cached.map { it.toRecipe(isFav = it.mealId in favoriteIds) })
+            emit(Resource.Success(cached.map { it.toRecipe(isFav = it.mealId in favoriteIds) }))
         }
 
         try{
@@ -39,22 +41,26 @@ class RecipeRepositoryImpl @Inject constructor(
             val updatedRecipes = entities.map {
                 it.toRecipe(isFav = it.mealId in updatedFavoriteIds)
             }
-            emit(updatedRecipes)
+            emit(Resource.Success(updatedRecipes))
         }
         catch (e: Exception){
-            if(cached.isEmpty()){
-                throw  e
-            }
-
+            emit(Resource.Error(e.message ?: "Failed to fetch recipes",
+                data = if (cached.isNotEmpty()){
+                    cached.map { it.toRecipe(isFav = it.mealId in favoriteIds) }
+                }
+                else null
+            ))
         }
     }
 
-    override fun getRecipeById(id: Int): Flow<Recipe?> = flow {
+    override fun getRecipeById(id: Int): Flow<Resource<Recipe>> = flow {
+        emit(Resource.Loading)
+
         val cached = recipeDao.getRecipeById(id.toString()).first()
         val isFavCached = favoriteDao.isFavorite(id.toString())
 
         if (cached != null){
-            emit(cached.toRecipe(isFav = isFavCached))
+            emit(Resource.Success(cached.toRecipe(isFav = isFavCached)))
         }
 
         try{
@@ -63,23 +69,33 @@ class RecipeRepositoryImpl @Inject constructor(
             if (dto != null){
                 recipeDao.insertRecipes(listOf(dto.toEntity()))
                 val isFav = favoriteDao.isFavorite(id.toString())
-                emit(dto.toRecipe().copy(isFav=isFav))
+                emit(Resource.Success(dto.toRecipe().copy(isFav = isFav)))
+            }
+            else{
+                emit(Resource.Error("Recipe not found"))
             }
         }catch (e: Exception){
-            if (cached == null) throw e
+            emit(Resource.Error(
+                message = e.message ?: "Failed to load recipe",
+                data = cached?.toRecipe(isFav = isFavCached)
+            ))
         }
     }
 
-    override fun searchRecipes(query: String): Flow<List<Recipe>> = flow {
+    override fun searchRecipes(query: String): Flow<Resource<List<Recipe>>> = flow {
+        emit(Resource.Loading)
         val favoriteIds = favoriteDao.getFavoriteIds().first()
 
         try {
             val response = apiService.searchMeals(query = query)
             val recipes = response.meals?.map { it.toRecipe().copy(isFav = it.id in favoriteIds) } ?: emptyList()
-            emit(recipes)
+            emit(Resource.Success(recipes))
         }catch (e: Exception){
             val cached = recipeDao.searchRecipes(query).first()
-            emit(cached.map { it.toRecipe(isFav = it.mealId in favoriteIds) })
+            emit(Resource.Error(
+                message = "Network unavailable — showing cached results",
+                data = cached.map { it.toRecipe(isFav = it.mealId in favoriteIds) }
+            ))
         }
     }
 
