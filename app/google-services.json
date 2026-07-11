@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "100709570750",
+    "project_id": "recipe-vault-c6462",
+    "storage_bucket": "recipe-vault-c6462.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:100709570750:android:e8afeb64cb98012c07e6ef",
+        "android_client_info": {
+          "package_name": "com.kiturk3.recipevault"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "100709570750-sq6j0fv2otfo3gd1joq7vmj3qcjuiqe4.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.kiturk3.recipevault",
+            "certificate_hash": "fcfabc238e90c2ba5c2f185346102ffb9ce248ed"
+          }
+        },
+        {
+          "client_id": "100709570750-i3bqm1vngfdik2k1mo38qkd2psbj1f3l.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAYT0cVCVxhP03spKwn3Tz9ah4Vs_R2bWc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "100709570750-i3bqm1vngfdik2k1mo38qkd2psbj1f3l.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

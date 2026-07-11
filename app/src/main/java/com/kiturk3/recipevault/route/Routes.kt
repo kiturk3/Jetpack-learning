@@ -13,3 +13,9 @@ object FavoritesRoute
 
 @Serializable
 data class AddEditRecipeRoute(val recipeId: Int? = null)
+
+@Serializable
+object LoginRoute
+
+@Serializable
+object SignupRoute

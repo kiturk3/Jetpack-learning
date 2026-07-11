@@ -28,7 +28,8 @@ import com.kiturk3.recipevault.viewModel.RecipeDetailViewModel
 @Composable
 fun RecipeDetailScreen(
     viewModel: RecipeDetailViewModel = hiltViewModel(),
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onBack: () -> Boolean
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 

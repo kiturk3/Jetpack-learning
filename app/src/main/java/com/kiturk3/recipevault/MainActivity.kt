@@ -3,6 +3,7 @@ package com.kiturk3.recipevault
 
 import android.content.res.Configuration
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -48,10 +49,13 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.google.firebase.auth.FirebaseAuth
 import com.kiturk3.recipevault.domain.model.Recipe
 import com.kiturk3.recipevault.route.FavoritesRoute
+import com.kiturk3.recipevault.route.LoginRoute
 import com.kiturk3.recipevault.route.RecipeListRoute
 import com.kiturk3.recipevault.route.RecipeVaultNavHost
+import com.kiturk3.recipevault.route.SignupRoute
 import com.kiturk3.recipevault.ui.theme.RecipeVaultTheme
 import com.kiturk3.recipevault.uiStates.RecipeUiState
 import com.kiturk3.recipevault.viewModel.RecipeViewModel
@@ -62,6 +66,14 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        // Runs once — not inside composition
+        val startDestination = if (FirebaseAuth.getInstance().currentUser != null) {
+            RecipeListRoute
+        } else {
+            LoginRoute
+        }
+
         setContent {
             RecipeVaultTheme {
                 val navController = rememberNavController()
@@ -70,39 +82,54 @@ class MainActivity : ComponentActivity() {
                     bottomBar = {
                         val navBackStackEntry by navController.currentBackStackEntryAsState()
                         val currentDestination = navBackStackEntry?.destination
-                        NavigationBar {
-                            NavigationBarItem(
-                                icon = { Icon(Icons.Default.Home, contentDescription = "Recipes") },
-                                label = { Text("Recipes") },
-                                selected = currentDestination?.hasRoute(RecipeListRoute::class) == true,
-                                onClick = {
-                                    navController.navigate(RecipeListRoute) {
-                                        popUpTo(RecipeListRoute) { inclusive = true }
+                        val showBottomBar =
+                            currentDestination?.hasRoute(LoginRoute::class) == false &&
+                                    currentDestination?.hasRoute(SignupRoute::class) == false
+                        if (showBottomBar) {
+                            NavigationBar {
+                                NavigationBarItem(
+                                    icon = { Icon(Icons.Default.Home, contentDescription = "Recipes") },
+                                    label = { Text("Recipes") },
+                                    selected = currentDestination?.hasRoute(RecipeListRoute::class) == true,
+                                    onClick = {
+                                        navController.navigate(RecipeListRoute) {
+                                            popUpTo(navController.graph.startDestinationId) {
+                                                saveState = true
+                                            }
+                                            launchSingleTop = true
+                                            restoreState = true
+                                        }
                                     }
-                                }
-                            )
-                            NavigationBarItem(
-                                icon = { Icon(Icons.Default.Favorite, contentDescription = "Favorites") },
-                                label = { Text("Favorites") },
-                                selected = currentDestination?.hasRoute(FavoritesRoute::class) == true,
-                                onClick = {
-                                    navController.navigate(FavoritesRoute) {
-                                        popUpTo(FavoritesRoute) { inclusive = true }
+                                )
+                                NavigationBarItem(
+                                    icon = { Icon(Icons.Default.Favorite, contentDescription = "Favorites") },
+                                    label = { Text("Favorites") },
+                                    selected = currentDestination?.hasRoute(FavoritesRoute::class) == true,
+                                    onClick = {
+                                        navController.navigate(FavoritesRoute) {
+                                            popUpTo(navController.graph.startDestinationId) {
+                                                saveState = true
+                                            }
+                                            launchSingleTop = true
+                                            restoreState = true
+                                        }
                                     }
-                                }
-                            )
+                                )
+                            }
                         }
                     }
                 ) { innerPadding ->
                     Box(modifier = Modifier.padding(innerPadding)) {
-                        RecipeVaultNavHost(navController = navController)
+                        RecipeVaultNavHost(
+                            navController = navController,
+                            startDestination = startDestination
+                        )
                     }
                 }
             }
         }
     }
 }
-
 
 @Composable
 fun FavButton(
