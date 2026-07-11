@@ -7,6 +7,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
 import com.kiturk3.recipevault.RecipeDetailScreen
 import com.kiturk3.recipevault.RecipeScreen
+import com.kiturk3.recipevault.presentation.FavoritesScreen
 
 @Composable
 fun RecipeVaultNavHost(navController: NavHostController) {
@@ -24,6 +25,11 @@ fun RecipeVaultNavHost(navController: NavHostController) {
         composable<RecipeDetailRoute> { backStackEntry ->
             val route: RecipeDetailRoute = backStackEntry.toRoute()
             RecipeDetailScreen()
+        }
+        composable<FavoritesRoute>{
+            FavoritesScreen(onRecipeClick = {recipeId ->
+                navController.navigate(RecipeDetailRoute(recipeId))
+            })
         }
     }
 }

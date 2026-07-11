@@ -9,4 +9,5 @@ interface RecipeRepository {
     fun getRecipeById(id: Int): Flow<Resource<Recipe>>
     fun searchRecipes(query: String): Flow<Resource<List<Recipe>>>
     suspend fun toggleFavorite(recipeId: Int, isFavorite: Boolean)
+    fun getFavorites(): Flow<List<Recipe>>
 }

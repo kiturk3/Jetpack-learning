@@ -21,6 +21,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material3.Card
@@ -28,6 +29,8 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -42,8 +45,12 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavDestination.Companion.hasRoute
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.kiturk3.recipevault.domain.model.Recipe
+import com.kiturk3.recipevault.route.FavoritesRoute
+import com.kiturk3.recipevault.route.RecipeListRoute
 import com.kiturk3.recipevault.route.RecipeVaultNavHost
 import com.kiturk3.recipevault.ui.theme.RecipeVaultTheme
 import com.kiturk3.recipevault.uiStates.RecipeUiState
@@ -52,14 +59,41 @@ import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
             RecipeVaultTheme {
                 val navController = rememberNavController()
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+                Scaffold(
+                    modifier = Modifier.fillMaxSize(),
+                    bottomBar = {
+                        val navBackStackEntry by navController.currentBackStackEntryAsState()
+                        val currentDestination = navBackStackEntry?.destination
+                        NavigationBar {
+                            NavigationBarItem(
+                                icon = { Icon(Icons.Default.Home, contentDescription = "Recipes") },
+                                label = { Text("Recipes") },
+                                selected = currentDestination?.hasRoute(RecipeListRoute::class) == true,
+                                onClick = {
+                                    navController.navigate(RecipeListRoute) {
+                                        popUpTo(RecipeListRoute) { inclusive = true }
+                                    }
+                                }
+                            )
+                            NavigationBarItem(
+                                icon = { Icon(Icons.Default.Favorite, contentDescription = "Favorites") },
+                                label = { Text("Favorites") },
+                                selected = currentDestination?.hasRoute(FavoritesRoute::class) == true,
+                                onClick = {
+                                    navController.navigate(FavoritesRoute) {
+                                        popUpTo(FavoritesRoute) { inclusive = true }
+                                    }
+                                }
+                            )
+                        }
+                    }
+                ) { innerPadding ->
                     Box(modifier = Modifier.padding(innerPadding)) {
                         RecipeVaultNavHost(navController = navController)
                     }
@@ -68,6 +102,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
+
 
 @Composable
 fun FavButton(

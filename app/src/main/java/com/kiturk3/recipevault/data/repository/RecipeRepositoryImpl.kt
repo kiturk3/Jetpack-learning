@@ -12,6 +12,7 @@ import com.kiturk3.recipevault.domain.repository.RecipeRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import kotlin.collections.emptyList
 
@@ -114,6 +115,22 @@ class RecipeRepositoryImpl @Inject constructor(
         }
         else{
             favoriteDao.removeFavorite(mealID)
+        }
+    }
+
+    override fun getFavorites(): Flow<List<Recipe>> {
+        return favoriteDao.getAllFavorites().map { entities ->
+            entities.map {
+                entity ->
+                Recipe(
+                    id = entity.mealId.toIntOrNull() ?: 0,
+                    title = entity.title,
+                    duration = 0,
+                    cuisine = entity.cuisine,
+                    isFav = true,
+                    instructions = null
+                )
+            }
         }
     }
 
