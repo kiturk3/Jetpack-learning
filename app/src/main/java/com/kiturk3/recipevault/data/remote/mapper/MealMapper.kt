@@ -11,7 +11,8 @@ fun MealDto.toRecipe(): Recipe = Recipe(
     duration = 0,
     cuisine = area ?: category ?: "Unknown",
     isFav = false,
-    instructions = instructions
+    instructions = instructions,
+    thumbnailUrl = thumbnailUrl
 )
 
 // MealDto → RecipeEntity (for Room cache)
@@ -30,5 +31,6 @@ fun RecipeEntity.toRecipe(isFav: Boolean = false): Recipe = Recipe(
     duration = 0,
     cuisine = cuisine,
     isFav = isFav,
-    instructions = instructions
+    instructions = instructions,
+    thumbnailUrl = thumbnailUrl
 )

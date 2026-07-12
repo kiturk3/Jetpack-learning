@@ -98,7 +98,8 @@ dependencies {
     implementation("com.google.android.libraries.identity.googleid:googleid:1.1.1")
 
     // Coil for image loading
-    implementation(libs.coil.compose)
+    implementation("io.coil-kt.coil3:coil-compose:3.5.0")
+    implementation("io.coil-kt.coil3:coil-network-okhttp:3.5.0")
 
     implementation(libs.kotlinx.coroutines.play.services)
 

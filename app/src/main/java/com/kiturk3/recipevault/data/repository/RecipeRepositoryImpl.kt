@@ -128,6 +128,7 @@ class RecipeRepositoryImpl @Inject constructor(
                     duration = 0,
                     cuisine = entity.cuisine,
                     isFav = true,
+                    thumbnailUrl = entity.thumbnailUrl,
                     instructions = null
                 )
             }

@@ -82,6 +82,7 @@ fun FavoritesScreen(
                             title = recipe.title,
                             subtitle = "${recipe.duration} min · ${recipe.cuisine}",
                             isFav = true,
+                            thumbnailUrl = recipe.thumbnailUrl,
                             onFavToggle = { viewModel.removeFavourites(recipe.id) },
                             onClick = { onRecipeClick(recipe.id) }
                         )

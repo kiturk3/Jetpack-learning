@@ -7,4 +7,5 @@ data class Recipe(
     val cuisine: String,
     val isFav: Boolean = false,
     val instructions: String? = null,
+    val thumbnailUrl: String? = null
 )
