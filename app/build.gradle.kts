@@ -106,4 +106,10 @@ dependencies {
     //shimmer effect
     implementation("com.valentinilk.shimmer:compose-shimmer:1.5.0")
 
+    //testing libraries
+    testImplementation(libs.mockk)
+    testImplementation(libs.turbine)
+    testImplementation(libs.truth)
+    testImplementation(libs.kotlinx.coroutines.test)
+
 }
