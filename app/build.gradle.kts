@@ -102,4 +102,7 @@ dependencies {
 
     implementation(libs.kotlinx.coroutines.play.services)
 
+    //shimmer effect
+    implementation("com.valentinilk.shimmer:compose-shimmer:1.5.0")
+
 }

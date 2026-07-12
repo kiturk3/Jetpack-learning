@@ -19,3 +19,6 @@ object LoginRoute
 
 @Serializable
 object SignupRoute
+
+@Serializable
+object ProfileRoute

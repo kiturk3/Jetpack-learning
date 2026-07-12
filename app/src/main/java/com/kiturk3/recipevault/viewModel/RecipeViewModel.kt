@@ -31,6 +31,9 @@ class RecipeViewModel @Inject constructor(
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
 
+    private val _isSearching = MutableStateFlow(false)
+    val isSearching: StateFlow<Boolean> = _isSearching.asStateFlow()
+
     init {
         loadRecipes()
         observeSearch()
@@ -61,6 +64,7 @@ class RecipeViewModel @Inject constructor(
             _searchQuery
                 .debounce(300.milliseconds)
                 .flatMapLatest { query ->
+                    _isSearching.value = true
                     if (query.isBlank()) {
                         getRecipesUseCase()
                     } else {
@@ -68,6 +72,7 @@ class RecipeViewModel @Inject constructor(
                     }
                 }
                 .collect { resource ->
+                    _isSearching.value = false
                     when (resource) {
                         is Resource.Loading -> {}
                         is Resource.Success -> updateSuccess(resource.data, _searchQuery.value)
@@ -104,6 +109,11 @@ class RecipeViewModel @Inject constructor(
                 }
             }
         }
+    }
+
+    fun retry() {
+        _uiState.value = RecipeUiState.Loading
+        loadRecipes()
     }
 
     private fun updateSuccess(recipes: List<Recipe>, query: String, isStale: Boolean = false) {

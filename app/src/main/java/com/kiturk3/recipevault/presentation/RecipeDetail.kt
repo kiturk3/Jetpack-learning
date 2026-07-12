@@ -1,4 +1,4 @@
-package com.kiturk3.recipevault
+package com.kiturk3.recipevault.presentation
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,6 +21,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.kiturk3.recipevault.presentation.components.ShimmerDetailScreen
 import com.kiturk3.recipevault.presentation.detail.RecipeDetailUiState
 import com.kiturk3.recipevault.viewModel.RecipeDetailViewModel
 
@@ -38,13 +39,7 @@ fun RecipeDetailScreen(
         contentAlignment = Alignment.Center
     ) {
         when (val state = uiState) {
-            is RecipeDetailUiState.Loading -> CircularProgressIndicator(
-                modifier = Modifier.size(48.dp),
-                color = MaterialTheme.colorScheme.primary,
-                strokeWidth = 4.dp,
-                trackColor = MaterialTheme.colorScheme.surfaceVariant,
-                strokeCap = StrokeCap.Round
-            )
+            is RecipeDetailUiState.Loading -> ShimmerDetailScreen()
             is RecipeDetailUiState.Error -> RecipeNotFoundUI(
                 title = "Recipe Not Found",
                 subtitle = state.message

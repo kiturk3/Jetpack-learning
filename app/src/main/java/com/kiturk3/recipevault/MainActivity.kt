@@ -3,7 +3,6 @@ package com.kiturk3.recipevault
 
 import android.content.res.Configuration
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -13,8 +12,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -23,12 +24,16 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.SearchOff
 import androidx.compose.material.icons.outlined.FavoriteBorder
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -40,8 +45,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -51,13 +56,17 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.google.firebase.auth.FirebaseAuth
 import com.kiturk3.recipevault.domain.model.Recipe
+import com.kiturk3.recipevault.presentation.auth.AuthStateHandler
+import com.kiturk3.recipevault.presentation.components.ShimmerRecipeList
 import com.kiturk3.recipevault.route.FavoritesRoute
 import com.kiturk3.recipevault.route.LoginRoute
+import com.kiturk3.recipevault.route.ProfileRoute
 import com.kiturk3.recipevault.route.RecipeListRoute
 import com.kiturk3.recipevault.route.RecipeVaultNavHost
 import com.kiturk3.recipevault.route.SignupRoute
 import com.kiturk3.recipevault.ui.theme.RecipeVaultTheme
 import com.kiturk3.recipevault.uiStates.RecipeUiState
+import com.kiturk3.recipevault.viewModel.AuthViewModel
 import com.kiturk3.recipevault.viewModel.RecipeViewModel
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -77,6 +86,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             RecipeVaultTheme {
                 val navController = rememberNavController()
+                val authViewModel: AuthViewModel = hiltViewModel()
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
                     bottomBar = {
@@ -115,6 +125,20 @@ class MainActivity : ComponentActivity() {
                                         }
                                     }
                                 )
+                                NavigationBarItem(
+                                    icon = { Icon(Icons.Default.Person, contentDescription = "Profile") },
+                                    label = { Text("Profile") },
+                                    selected = currentDestination?.hasRoute(ProfileRoute::class) == true,
+                                    onClick = {
+                                        navController.navigate(ProfileRoute) {
+                                            popUpTo(navController.graph.startDestinationId) {
+                                                saveState = true
+                                            }
+                                            launchSingleTop = true
+                                            restoreState = true
+                                        }
+                                    }
+                                )
                             }
                         }
                     }
@@ -122,7 +146,12 @@ class MainActivity : ComponentActivity() {
                     Box(modifier = Modifier.padding(innerPadding)) {
                         RecipeVaultNavHost(
                             navController = navController,
-                            startDestination = startDestination
+                            startDestination = startDestination,
+                            authViewModel = authViewModel
+                        )
+                        AuthStateHandler(
+                            navController = navController,
+                            viewModel = authViewModel
                         )
                     }
                 }
@@ -159,20 +188,18 @@ fun RecipeScreen(
         modifier = modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
+        val isSearching by viewModel.isSearching.collectAsStateWithLifecycle()
         when (uiState) {
             is RecipeUiState.Loading -> {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(48.dp),
-                    color = MaterialTheme.colorScheme.primary,
-                    strokeWidth = 4.dp,
-                    trackColor = MaterialTheme.colorScheme.surfaceVariant,
-                    strokeCap = StrokeCap.Round
+                ShimmerRecipeList(
+                    modifier = Modifier.fillMaxSize()
                 )
             }
             is RecipeUiState.Error -> {
                 NoRecipeUI(
                     title = "Something went wrong",
-                    subtitle = (uiState as RecipeUiState.Error).message
+                    subtitle = (uiState as RecipeUiState.Error).message,
+                    onRetry = { viewModel.retry() }
                 )
             }
             is RecipeUiState.Success -> {
@@ -183,6 +210,13 @@ fun RecipeScreen(
                         onQueryChange = { viewModel.onSearchQueryChange(it) },
                         modifier = Modifier.padding(16.dp)
                     )
+                    if (isSearching) {
+                        LinearProgressIndicator(
+                            modifier = Modifier.fillMaxWidth(),
+                            color = MaterialTheme.colorScheme.primary,
+                            trackColor = MaterialTheme.colorScheme.surfaceVariant
+                        )
+                    }
                     if (successState.isStale) {
                         Text(
                             text = "Showing cached results — check your connection",
@@ -292,29 +326,51 @@ fun RecipeCard(
 }
 
 @Composable
-fun NoRecipeUI(title: String, subtitle: String, modifier: Modifier = Modifier) {
+fun NoRecipeUI(
+    title: String,
+    subtitle: String,
+    onRetry: (() -> Unit)? = null,
+    modifier: Modifier = Modifier
+) {
     Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         Column(
             modifier = Modifier.padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
+            Icon(
+                imageVector = Icons.Default.SearchOff,
+                contentDescription = null,
+                modifier = Modifier.size(64.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+            )
+            Spacer(modifier = Modifier.height(16.dp))
             Text(
                 title,
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.tertiary
+                color = MaterialTheme.colorScheme.tertiary,
+                textAlign = TextAlign.Center
             )
+            Spacer(modifier = Modifier.height(8.dp))
             Text(
                 subtitle,
                 style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier.padding(top = 4.dp),
-                color = MaterialTheme.colorScheme.tertiary
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center
             )
+            if (onRetry != null) {
+                Spacer(modifier = Modifier.height(24.dp))
+                Button(onClick = onRetry) {
+                    Icon(Icons.Default.Refresh, contentDescription = null)
+                    Spacer(modifier = Modifier.size(8.dp))
+                    Text("Try Again")
+                }
+            }
         }
     }
 }
-
 
 @Composable
 fun SearchUI(

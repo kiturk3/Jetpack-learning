@@ -1,4 +1,4 @@
-package com.kiturk3.recipevault
+package com.kiturk3.recipevault.presentation.auth
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column

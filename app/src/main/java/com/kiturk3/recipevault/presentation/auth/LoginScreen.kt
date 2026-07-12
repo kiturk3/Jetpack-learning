@@ -1,5 +1,6 @@
-package com.kiturk3.recipevault
+package com.kiturk3.recipevault.presentation.auth
 
+import android.R
 import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -40,7 +41,6 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.credentials.CredentialManager
 import androidx.credentials.GetCredentialRequest
-import androidx.credentials.PublicKeyCredential
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
@@ -178,7 +178,7 @@ fun LoginScreen(
             modifier = Modifier.fillMaxWidth()
         ) {
             Icon(
-                painter = painterResource(id = android.R.drawable.ic_menu_add),
+                painter = painterResource(id = R.drawable.ic_menu_add),
                 contentDescription = null,
                 modifier = Modifier.size(18.dp)
             )

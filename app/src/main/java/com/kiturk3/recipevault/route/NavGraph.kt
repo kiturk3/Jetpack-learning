@@ -5,15 +5,18 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
-import com.kiturk3.recipevault.LoginScreen
-import com.kiturk3.recipevault.RecipeDetailScreen
+import com.kiturk3.recipevault.presentation.auth.LoginScreen
+import com.kiturk3.recipevault.presentation.ProfileScreen
+import com.kiturk3.recipevault.presentation.RecipeDetailScreen
 import com.kiturk3.recipevault.RecipeScreen
-import com.kiturk3.recipevault.SignupScreen
+import com.kiturk3.recipevault.presentation.auth.SignupScreen
 import com.kiturk3.recipevault.presentation.FavoritesScreen
+import com.kiturk3.recipevault.viewModel.AuthViewModel
 
 @Composable
 fun RecipeVaultNavHost(navController: NavHostController,
-                       startDestination: Any = LoginRoute) {
+                       startDestination: Any = LoginRoute,
+                       authViewModel: AuthViewModel) {
     NavHost(
         navController = navController,
         startDestination = startDestination
@@ -36,6 +39,7 @@ fun RecipeVaultNavHost(navController: NavHostController,
         }
         composable<LoginRoute>{
             LoginScreen(
+                viewModel = authViewModel,
                 onNavigateToSignUp = {navController.navigate(SignupRoute)},
                 onLoginSuccess = {
                     navController.navigate(RecipeListRoute){
@@ -49,6 +53,7 @@ fun RecipeVaultNavHost(navController: NavHostController,
         }
         composable<SignupRoute>{
             SignupScreen(
+                viewModel = authViewModel,
                 onNavigateToLogin = {
                     navController.popBackStack()
                 },
@@ -61,6 +66,11 @@ fun RecipeVaultNavHost(navController: NavHostController,
                 }
             )
 
+        }
+        composable<ProfileRoute>{
+            ProfileScreen(
+                viewModel = authViewModel
+            )
         }
     }
 }
