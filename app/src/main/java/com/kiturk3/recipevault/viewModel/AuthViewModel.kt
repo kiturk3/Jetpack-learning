@@ -95,7 +95,6 @@ class AuthViewModel @Inject constructor(
     private fun observeAuthState() {
         viewModelScope.launch {
             getCurrentUserUseCase().collect { user ->
-                Log.d("AuthVM", "Auth state changed: ${user?.email ?: "null"}")
                 _currentUser.value = user
                 _isAuthChecked.value = true
             }
