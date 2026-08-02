@@ -49,6 +49,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -177,7 +178,7 @@ fun FavButton(
     IconButton(onClick = onToggle, modifier = modifier) {
         Icon(
             if (isFav) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
-            null,
+            if (isFav) "Remove from favorites" else "Add to favorites",
             tint = if (isFav) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
@@ -311,7 +312,7 @@ fun RecipeCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Card(modifier = modifier.clickable(onClick = onClick)) {
+    Card(modifier = modifier.clickable(onClick = onClick).testTag("recipe_card_$title"),) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
@@ -366,7 +367,7 @@ fun NoRecipeUI(
     onRetry: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
-    Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+    Box(modifier = modifier.fillMaxSize().testTag("empty_state"), contentAlignment = Alignment.Center) {
         Column(
             modifier = Modifier.padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -434,7 +435,7 @@ fun SearchUI(
                 }
             }
         },
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth().testTag("search_field"),
         colors = TextFieldDefaults.colors(
             focusedTextColor = MaterialTheme.colorScheme.tertiary,
             unfocusedTextColor = MaterialTheme.colorScheme.tertiary,

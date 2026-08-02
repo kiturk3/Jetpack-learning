@@ -24,6 +24,7 @@ android {
         versionName = "1.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner = "com.kiturk3.recipevault.RecipeVaultTestRunner"
     }
 
     buildTypes {
@@ -43,7 +44,6 @@ android {
 }
 
 dependencies {
-    implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.foundation.layout)
     implementation(libs.androidx.compose.material.icons.extended)
@@ -112,5 +112,7 @@ dependencies {
     testImplementation(libs.turbine)
     testImplementation(libs.truth)
     testImplementation(libs.kotlinx.coroutines.test)
+    androidTestImplementation(libs.hilt.android.testing)
+    kspAndroidTest(libs.hilt.android.compiler)
 
 }

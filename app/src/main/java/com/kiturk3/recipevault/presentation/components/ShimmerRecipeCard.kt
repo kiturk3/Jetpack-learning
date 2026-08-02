@@ -25,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 
 @Composable
@@ -91,7 +92,7 @@ fun ShimmerRecipeCard(modifier: Modifier = Modifier) {
 @Composable
 fun ShimmerRecipeList(modifier: Modifier = Modifier) {
     Column(
-        modifier = modifier.padding(16.dp),
+        modifier = modifier.padding(16.dp).testTag("shimmer_list"),
         verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)
     ) {
         repeat(6) {
