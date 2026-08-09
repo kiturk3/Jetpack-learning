@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
@@ -6,6 +8,13 @@ plugins {
     alias(libs.plugins.ksp)
     id("com.google.gms.google-services")
 
+}
+
+
+val localProperties = Properties()
+val localPropertiesFile = rootProject.file("local.properties")
+if (localPropertiesFile.exists()) {
+    localProperties.load(localPropertiesFile.inputStream())
 }
 
 android {
@@ -20,18 +29,37 @@ android {
         applicationId = "com.kiturk3.recipevault"
         minSdk = 24
         targetSdk = 36
-        versionCode = 2
-        versionName = "1.1"
+        versionCode = 3
+        versionName = "1.2"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         testInstrumentationRunner = "com.kiturk3.recipevault.RecipeVaultTestRunner"
     }
 
+    signingConfigs {
+        create("release") {
+            storeFile = file(localProperties["KEYSTORE_PATH"] as? String ?: "")
+            storePassword = localProperties["KEYSTORE_PASSWORD"] as? String ?: ""
+            keyAlias = localProperties["KEY_ALIAS"] as? String ?: "recipevault"
+            keyPassword = localProperties["KEY_PASSWORD"] as? String ?: ""
+        }
+    }
+
     buildTypes {
+        debug {
+            applicationIdSuffix = ""
+            versionNameSuffix = "-debug"
+            isDebuggable = true
+            isMinifyEnabled = false
+        }
         release {
-            optimization {
-                enable = false
-            }
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+            isDebuggable = false
         }
     }
     compileOptions {
@@ -40,6 +68,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 

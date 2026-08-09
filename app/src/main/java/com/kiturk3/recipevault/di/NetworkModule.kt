@@ -1,5 +1,6 @@
 package com.kiturk3.recipevault.di
 
+import com.kiturk3.recipevault.BuildConfig
 import com.kiturk3.recipevault.data.remote.MealApiService
 import dagger.Module
 import dagger.Provides
@@ -18,12 +19,16 @@ object NetworkModule {
     @Provides
     @Singleton
     fun provideOkHttpClient(): OkHttpClient {
-        val logging = HttpLoggingInterceptor().apply {
-            level = HttpLoggingInterceptor.Level.BODY
+
+        val builder = OkHttpClient.Builder()
+
+        if (BuildConfig.DEBUG) {
+            val logging = HttpLoggingInterceptor().apply {
+                level = HttpLoggingInterceptor.Level.BODY
+            }
+            builder.addInterceptor(logging)
         }
-        return OkHttpClient.Builder()
-            .addInterceptor(logging)
-            .build()
+        return builder.build()
     }
 
     @Provides
