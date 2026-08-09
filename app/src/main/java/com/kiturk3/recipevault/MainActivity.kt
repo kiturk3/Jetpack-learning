@@ -22,6 +22,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Home
@@ -32,6 +33,7 @@ import androidx.compose.material.icons.filled.SearchOff
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -40,6 +42,7 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
@@ -187,6 +190,7 @@ fun FavButton(
 @Composable
 fun RecipeScreen(
     onRecipeClick: (Int) -> Unit,
+    onAddRecipe: () -> Unit,
     viewModel: RecipeViewModel = hiltViewModel(),
     modifier: Modifier = Modifier
 ) {
@@ -260,19 +264,34 @@ fun RecipeScreen(
                         )
                     }
                 }
+
+                Box(modifier = Modifier.fillMaxSize()) {
+                    Column(modifier = Modifier.fillMaxSize()) {
+                        // existing content
+                    }
+                    FloatingActionButton(
+                        onClick = onAddRecipe,
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .padding(16.dp),
+                        containerColor = MaterialTheme.colorScheme.primary
+                    ) {
+                        Icon(Icons.Default.Add, contentDescription = "Add recipe")
+                    }
+                }
             }
         }
     }
 }
 
-@Preview(uiMode = Configuration.UI_MODE_NIGHT_YES)
-@Preview(showBackground = true)
-@Composable
-fun RecipeScreenPreview() {
-    RecipeVaultTheme {
-        RecipeScreen(onRecipeClick = {})
-    }
-}
+//@Preview(uiMode = Configuration.UI_MODE_NIGHT_YES)
+//@Preview(showBackground = true)
+//@Composable
+//fun RecipeScreenPreview() {
+//    RecipeVaultTheme {
+//        RecipeScreen(onRecipeClick = {})
+//    }
+//}
 
 @Composable
 fun RecipeList(
@@ -301,7 +320,6 @@ fun RecipeList(
 }
 
 
-@Preview
 @Composable
 fun RecipeCard(
     title: String,
@@ -310,6 +328,7 @@ fun RecipeCard(
     thumbnailUrl: String?,
     onFavToggle: () -> Unit,
     onClick: () -> Unit,
+    isUserCreated: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     Card(modifier = modifier.clickable(onClick = onClick).testTag("recipe_card_$title"),) {
@@ -348,6 +367,20 @@ fun RecipeCard(
                         modifier = Modifier.weight(1f)
                     )
                     FavButton(isFav = isFav, onToggle = onFavToggle)
+                    if (isUserCreated) {  // or pass as parameter: isuserCreated: Boolean
+                        Surface(
+                            color = MaterialTheme.colorScheme.primaryContainer,
+                            shape = RoundedCornerShape(4.dp),
+                            modifier = Modifier.padding(top = 2.dp)
+                        ) {
+                            Text(
+                                text = "My Recipe",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                            )
+                        }
+                    }
                 }
                 Text(
                     text = subtitle,

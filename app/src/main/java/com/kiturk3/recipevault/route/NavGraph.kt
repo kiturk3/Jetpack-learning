@@ -11,6 +11,7 @@ import com.kiturk3.recipevault.presentation.RecipeDetailScreen
 import com.kiturk3.recipevault.RecipeScreen
 import com.kiturk3.recipevault.presentation.auth.SignupScreen
 import com.kiturk3.recipevault.presentation.FavoritesScreen
+import com.kiturk3.recipevault.presentation.recipe.AddEditRecipeScreen
 import com.kiturk3.recipevault.viewModel.AuthViewModel
 
 @Composable
@@ -21,16 +22,28 @@ fun RecipeVaultNavHost(navController: NavHostController,
         navController = navController,
         startDestination = startDestination
     ) {
+        composable<AddEditRecipeRoute> {
+            AddEditRecipeScreen(
+                onBack = { navController.popBackStack() }
+            )
+        }
         composable<RecipeListRoute> {
             RecipeScreen(
                 onRecipeClick = { recipeId ->
                     navController.navigate(RecipeDetailRoute(recipeId))
+                },
+                onAddRecipe = {
+                    navController.navigate(AddEditRecipeRoute())
                 }
             )
         }
-        composable<RecipeDetailRoute> { backStackEntry ->
-            val route: RecipeDetailRoute = backStackEntry.toRoute()
-            RecipeDetailScreen(onBack = { navController.popBackStack() })
+        composable<RecipeDetailRoute> {
+            RecipeDetailScreen(
+                onBack = { navController.popBackStack() },
+                onEditRecipe = { recipeId ->
+                    navController.navigate(AddEditRecipeRoute(recipeId))
+                }
+            )
         }
         composable<FavoritesRoute>{
             FavoritesScreen(onRecipeClick = {recipeId ->

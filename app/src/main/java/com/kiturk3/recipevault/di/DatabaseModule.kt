@@ -4,7 +4,9 @@ import android.content.Context
 import androidx.room.Room
 import com.kiturk3.recipevault.data.local.RecipeDatabase
 import com.kiturk3.recipevault.data.local.dao.FavoriteDao
+import com.kiturk3.recipevault.data.local.dao.RatingDao
 import com.kiturk3.recipevault.data.local.dao.RecipeDao
+import com.kiturk3.recipevault.data.local.dao.UserRecipeDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -39,5 +41,17 @@ object DatabaseModule {
     @Singleton
     fun provideRecipeDao(database: RecipeDatabase): RecipeDao{
         return database.recipeDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideUserRecipeDao(database: RecipeDatabase): UserRecipeDao {
+        return database.userRecipeDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideRatingDao(database: RecipeDatabase): RatingDao {
+        return database.ratingDao()
     }
 }

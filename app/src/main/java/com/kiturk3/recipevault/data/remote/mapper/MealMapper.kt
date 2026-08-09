@@ -1,6 +1,7 @@
 package com.kiturk3.recipevault.data.remote.mapper
 
 import com.kiturk3.recipevault.data.local.entity.RecipeEntity
+import com.kiturk3.recipevault.data.local.entity.UserRecipeEntity
 import com.kiturk3.recipevault.data.remote.dto.MealDto
 import com.kiturk3.recipevault.domain.model.Recipe
 
@@ -33,4 +34,25 @@ fun RecipeEntity.toRecipe(isFav: Boolean = false): Recipe = Recipe(
     isFav = isFav,
     instructions = instructions,
     thumbnailUrl = thumbnailUrl
+)
+
+fun UserRecipeEntity.toRecipe(): Recipe = Recipe(
+    id = id,
+    title = title,
+    duration = duration,
+    cuisine = cuisine,
+    isFav = false,
+    instructions = instructions,
+    thumbnailUrl = null,
+    isUserCreated = true,
+    ingredients = ingredients
+)
+
+fun Recipe.toUserRecipeEntity(): UserRecipeEntity = UserRecipeEntity(
+    id = if (id == 0) 0 else id,
+    title = title,
+    cuisine = cuisine,
+    duration = duration,
+    ingredients = ingredients ?: "",
+    instructions = instructions ?: ""
 )
