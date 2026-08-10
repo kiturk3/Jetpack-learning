@@ -12,6 +12,8 @@ interface RecipeRepository {
     suspend fun toggleFavorite(recipeId: Int, isFavorite: Boolean)
     fun getFavorites(): Flow<List<Recipe>>
 
+    suspend fun refreshRecipesFromNetwork()
+
     fun getUserRecipes(): Flow<List<Recipe>>
     suspend fun addUserRecipe(recipe: Recipe): Long
     suspend fun updateUserRecipe(recipe: Recipe)

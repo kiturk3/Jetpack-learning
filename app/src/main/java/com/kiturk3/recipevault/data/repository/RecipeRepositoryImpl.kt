@@ -14,8 +14,11 @@ import com.kiturk3.recipevault.domain.Resource
 import com.kiturk3.recipevault.domain.model.Rating
 import com.kiturk3.recipevault.domain.model.Recipe
 import com.kiturk3.recipevault.domain.repository.RecipeRepository
+import com.kiturk3.recipevault.domain.usecase.RefreshRecipesUseCase
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
@@ -29,44 +32,29 @@ class RecipeRepositoryImpl @Inject constructor(
     private val userRecipeDao: UserRecipeDao
 ) : RecipeRepository {
 
-    override fun getRecipes(): Flow<Resource<List<Recipe>>> = flow {
-        emit(Resource.Loading)
-        val favoriteIds = favoriteDao.getFavoriteIds().first()
-        //Try to load from database first
-        val cached = recipeDao.getAllRecipes().first()
-        val userRecipes = userRecipeDao.getAllUserRecipes().first()
-            .map { it.toRecipe() }
-
-
-        if (cached.isNotEmpty() || userRecipes.isNotEmpty()){
-            val cachedRecipes = cached.map {
-                it.toRecipe(isFav = it.mealId in favoriteIds)
-            }
-            emit(Resource.Success(userRecipes + cachedRecipes))
+    override fun getRecipes(): Flow<Resource<List<Recipe>>> = combine(
+        userRecipeDao.getAllUserRecipes(),
+        favoriteDao.getFavoriteIds(),
+        recipeDao.getAllRecipes()
+    ) { userEntities, favoriteIds, cachedEntities ->
+        val userRecipes = userEntities.map { it.toRecipe() }
+        val cachedRecipes = cachedEntities.map {
+            it.toRecipe(isFav = it.mealId in favoriteIds)
         }
+        Resource.Success(userRecipes + cachedRecipes) as Resource<List<Recipe>>
+    }
 
-        try{
+    override suspend fun refreshRecipesFromNetwork() {
+        try {
             val response = apiService.searchMeals(query = "")
             val entities = response.meals?.map { it.toEntity() } ?: emptyList()
-
             recipeDao.clearRecipes()
             recipeDao.insertRecipes(entities)
-
-            val updatedFavoriteIds = favoriteDao.getFavoriteIds().first()
-            val updatedUserRecipes = userRecipeDao.getAllUserRecipes().first()
-                .map { it.toRecipe() }
-            val apiRecipes = entities.map {
-                it.toRecipe(isFav = it.mealId in updatedFavoriteIds)
-            }
-            emit(Resource.Success(updatedUserRecipes + apiRecipes))
-        }
-        catch (e: Exception){
-            emit(Resource.Error(e.message ?: "Failed to fetch recipes",
-                data = if (cached.isNotEmpty() || userRecipes.isNotEmpty()){
-                    cached.map { it.toRecipe(isFav = it.mealId in favoriteIds) }
-                }
-                else null
-            ))
+            // Room's getAllRecipes() Flow re-emits automatically after insert
+            // which triggers combine → new Success emission to UI
+        } catch (e: Exception) {
+            // Swallow — local data is already showing via combine
+            throw e  // re-throw so ViewModel can handle error state if needed
         }
     }
 
